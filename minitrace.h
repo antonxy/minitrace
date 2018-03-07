@@ -123,6 +123,9 @@ void internal_mtr_raw_event_arg(const char *category, const char *name, char ph,
 #define MTR_END_I(c, n, aname, aintval) internal_mtr_raw_event_arg(c, n, 'E', 0, MTR_ARG_TYPE_INT, aname, (void*)(intptr_t)(aintval))
 #define MTR_SCOPE_I(c, n, aname, aintval) MTRScopedTraceArg ____mtr_scope(c, n, MTR_ARG_TYPE_INT, aname, (void*)(intptr_t)(aintval))
 
+#define MTR_BEGIN_TYPED(c, n, atype, aname, astrval) internal_mtr_raw_event_arg(c, n, 'B', 0, atype, aname, (void *)(astrval))
+#define MTR_END_TYPED(c, n, atype, aname, aintval) internal_mtr_raw_event_arg(c, n, 'E', 0, atype, aname, (void*)(intptr_t)(aintval))
+
 // Instant events. For things with no duration.
 #define MTR_INSTANT(c, n) internal_mtr_raw_event(c, n, 'I', 0)
 #define MTR_INSTANT_C(c, n, aname, astrval) internal_mtr_raw_event(c, n, 'I', 0, MTR_ARG_TYPE_STRING_CONST, aname, (void *)(astrval))
@@ -209,16 +212,15 @@ class MTRScopedTrace {
 public:
 	MTRScopedTrace(const char *category, const char *name)
 		: category_(category), name_(name) {
-		start_time_ = mtr_time_s();
+		MTR_BEGIN(category, name);
 	}
 	~MTRScopedTrace() {
-		internal_mtr_raw_event(category_, name_, 'X', &start_time_);
+		MTR_END(category_, name_);
 	}
 
 private:
 	const char *category_;
 	const char *name_;
-	double start_time_;
 };
 
 // Only outputs a block if execution time exceeded the limit.
@@ -247,10 +249,10 @@ class MTRScopedTraceArg {
 public:
 	MTRScopedTraceArg(const char *category, const char *name, mtr_arg_type arg_type, const char *arg_name, void *arg_value)
 		: category_(category), name_(name) {
-		internal_mtr_raw_event_arg(category, name, 'B', 0, arg_type, arg_name, arg_value);
+		MTR_BEGIN_TYPED(category, name, arg_type, arg_name, arg_value);
 	}
 	~MTRScopedTraceArg() {
-		internal_mtr_raw_event(category_, name_, 'E', 0);
+		MTR_END(category_, name_);
 	}
 
 private:
