@@ -55,7 +55,7 @@ static int is_tracing = 0;
 static int64_t time_offset;
 static int first_line = 1;
 static FILE *f;
-static __thread int cur_thread_id;	// Thread local storage
+//static __thread int cur_thread_id;	// Thread local storage // Does not work in mingw
 static pthread_mutex_t mutex;
 
 #define STRING_POOL_SIZE 100
@@ -295,9 +295,9 @@ void internal_mtr_raw_event(const char *category, const char *name, char ph, voi
 	if (!is_tracing || count >= INTERNAL_MINITRACE_BUFFER_SIZE)
 		return;
 	double ts = mtr_time_s();
-	if (!cur_thread_id) {
-		cur_thread_id = get_cur_thread_id();
-	}
+	//if (!cur_thread_id) {
+	//	cur_thread_id = get_cur_thread_id();
+	//}
 
 #if 0 && _WIN32	// TODO: This needs testing
 	int bufPos = InterlockedIncrement(&count);
@@ -321,7 +321,8 @@ void internal_mtr_raw_event(const char *category, const char *name, char ph, voi
 	} else {
 		ev->ts = (int64_t)(ts * 1000000);
 	}
-	ev->tid = cur_thread_id;
+	//ev->tid = cur_thread_id;
+	ev->tid = get_cur_thread_id(); //TODO inefficient?
 	ev->pid = 0;
 }
 
@@ -331,9 +332,9 @@ void internal_mtr_raw_event_arg(const char *category, const char *name, char ph,
 #endif
 	if (!is_tracing || count >= INTERNAL_MINITRACE_BUFFER_SIZE)
 		return;
-	if (!cur_thread_id) {
-		cur_thread_id = get_cur_thread_id();
-	}
+	//if (!cur_thread_id) {
+	//	cur_thread_id = get_cur_thread_id();
+	//}
 	double ts = mtr_time_s();
 
 #if 0 && _WIN32	// TODO: This needs testing
@@ -351,7 +352,8 @@ void internal_mtr_raw_event_arg(const char *category, const char *name, char ph,
 	ev->id = id;
 	ev->ts = (int64_t)(ts * 1000000);
 	ev->ph = ph;
-	ev->tid = cur_thread_id;
+	//ev->tid = cur_thread_id;
+	ev->tid = get_cur_thread_id(); //TODO inefficient?
 	ev->pid = 0;
 	ev->arg_type = arg_type;
 	ev->arg_name = arg_name;
